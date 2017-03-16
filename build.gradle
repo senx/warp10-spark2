@@ -1,0 +1,393 @@
+//
+//   Copyright 2016  Cityzen Data
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+//
+
+buildscript {
+  repositories {
+    jcenter()
+    maven {
+      url "https://plugins.gradle.org/m2"
+    }
+  }
+  dependencies {
+    classpath "gradle.plugin.com.selesse:gradle-git-changelog:0.2.0"
+  }
+}
+
+plugins {
+  id "com.jfrog.bintray" version "1.4"
+  id "com.selesse.git.changelog" version "0.2.0"
+}
+
+apply plugin: 'java';
+apply plugin: 'eclipse';
+apply plugin: 'idea';
+apply plugin: 'maven';
+apply plugin: 'maven-publish';
+apply plugin: 'com.jfrog.bintray'
+
+group = 'io.warp10'
+
+archivesBaseName = 'spark'
+version = getVersionName('')
+
+ext {
+  stagingUser = project.hasProperty('stagingUser') ? project.property('stagingUser') : System.getenv('STAGING_USER')
+  stagingURL = project.hasProperty('stagingURL') ? project.property('stagingURL') : System.getenv('STAGING_URL')
+
+  if (null == stagingUser || null == stagingURL) {
+    stagingUser = ''
+    stagingURL = ''
+  }
+
+  sparkPublishUser = project.hasProperty('sparkPublishUser') ? project.property('sparkPublishUser') : System.getenv('WARP10_SPARK_PUBLISH_USER')
+  sparkPublishURL = project.hasProperty('sparkPublishURL') ? project.property('sparkPublishURL') : System.getenv('WARP10_SPARK_PUBLISH_URL')
+
+  if (null == sparkPublishUser || null == sparkPublishURL) {
+    sparkPublishUser = stagingUser
+    sparkPublishURL = stagingURL
+  }
+
+  gradle.taskGraph.whenReady { graph ->
+    println "building spark version=$version"
+    if (graph.hasTask(uploadArchives) || graph.hasTask(bintrayUpload)) {
+      //if (!(version ==~ /\d+\.\d+\.\d+\-\d+\-\w+/)) {
+      //    throw new GradleException("Cannot upload archive: version ${version} is not correct (X.X.X-X-X)")
+      //}
+
+      if (!isGitRepoSynced()) {
+        throw new GradleException("Cannot upload archive: local repo contains uncommited files (git status -u no --porcelain)")
+      }
+    }
+
+  }
+}
+
+//
+// Configurations scp uploadArchives task
+//
+configurations {
+  deployerJars
+  provided
+}
+
+//
+// Force versions
+//
+configurations.all {
+  resolutionStrategy {
+    // fail eagerly on version conflict (includes transitive dependencies)
+    // e.g. multiple different versions of the same dependency (group and name are equal)
+    //failOnVersionConflict()
+
+    // force certain versions of dependencies (including transitive)
+    //  *append new forced modules:
+    // This is needed to force Guava to 15.0 and not 17.0 as Renjin pulls
+    // HBase does not work with > 15.0
+    force 'com.google.guava:guava:15.0'
+  }
+}
+
+//
+// Project source sets
+// MUST appear before 'dependencies' so all source sets are known
+//
+
+sourceSets {
+  main {
+    compileClasspath += configurations.provided
+  }
+}
+
+repositories {
+  jcenter()
+  maven {
+    url 'https://repository.apache.org/content/groups/public'
+  }
+  mavenCentral()
+  mavenLocal()
+  maven {
+    url "http://maven.twttr.com"
+  }
+  // bedatadriven - http://www.renjin.org/#downloads
+  maven {
+    url "http://nexus.bedatadriven.com/content/groups/public/"
+  }
+  maven {
+    url "http://repo.opengeo.org/"
+  }
+
+  maven {
+    url 'https://dl.bintray.com/hbs/maven'
+  }
+
+  maven {
+    url 'https://dl.bintray.com/cityzendata/maven'
+  }
+
+  maven {
+    url "http://127.0.0.1:40080/m2"
+  }
+
+}
+
+// GLOBAL DEPENDENCIES
+dependencies {
+  //UPLOAD ARTIFACTS THROUGH SSH
+  deployerJars 'org.apache.maven.wagon:wagon-ssh-external:2.8'
+
+  //
+  // WarpScript
+  //
+
+  compile 'io.warp10:warpscript:1.2.6-rc3'
+
+  testCompile group: 'junit', name: 'junit', version: '4.6'
+
+  //
+  // Apache Spark
+  //
+  compile 'org.apache.spark:spark-core_2.11:2.1.0'
+
+}
+
+//
+// IDE CONFIGURATIONS
+//
+// IDEA DEFAULT CONFIGURATION
+idea {
+  module {
+    inheritOutputDirs = true
+    // add build/classes directory to excluded folders: index bytecode is not a really good idea ;)
+    excludeDirs += file('build')
+  }
+}
+// ECLIPSE
+eclipse {
+  classpath {
+    //customizing the classes output directory:
+    defaultOutputDir = file('build-eclipse')
+
+    //default settings for downloading sources and Javadoc:
+    downloadSources = true
+    downloadJavadoc = false
+  }
+}
+
+task pack(type: Jar, dependsOn: jar) {
+  zip64 = true
+
+  manifest {
+    attributes("Implementation-Title": "spark")
+    attributes("Implementation-Version": version)
+  }
+
+  from files(sourceSets.main.output.classesDir)
+  from {
+    configurations.compile.collect {
+      it.isDirectory() ? it : zipTree(it).matching {
+        exclude { it.toString().contains('servlet-api') }
+        exclude { it.toString().contains('jmh') }
+        exclude { it.toString().contains('junit') }
+        exclude { it.toString().contains('parquet') }
+        exclude { it.toString().contains('org.apache.hadoop') }
+        exclude { it.toString().contains('org.apache.spark') }
+      }
+    }
+  } {
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+    exclude 'about.html'
+    exclude 'about_files/**'
+    exclude 'plugin.properties'
+    exclude 'jetty-dir.css'
+  }
+  with jar
+}
+
+task packWithTests(type: Jar, dependsOn: pack) {
+  zip64 = true
+  appendix = 'tests'
+
+  from zipTree(pack.archivePath)
+  from sourceSets.test.output
+}
+
+// DEPLOY ON MAVEN REPO WITH SCP
+uploadArchives {
+  repositories {
+    repositories.mavenDeployer {
+      configuration = configurations.deployerJars
+      uniqueVersion = false
+
+      repository(url: "scpexe://${stagingURL}") {
+        authentication(userName: "${stagingUser}")
+      }
+    }
+  }
+}
+
+publishing {
+  publications {
+    spark(MavenPublication) {
+      groupId 'io.warp10'
+      artifactId archivesBaseName
+      version version
+    }
+  }
+}
+
+// DEPLOY ON BINTRAY
+bintray {
+  dryRun = false
+
+  user = project.hasProperty('bintrayUser') ? project.property('bintrayUser') : System.getenv('BINTRAY_USER')
+  key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
+
+  publications = ['spark']
+
+  pkg {
+    repo = 'maven'
+    name = 'spark'
+    licenses = ['Apache-2.0']
+    vcsUrl = 'https://github.com/cityzendata/spark.git'
+    version {
+      name = version
+      released = new Date()
+      vcsTag = version
+    }
+  }
+}
+
+changelog {
+  // The title appears at the top of the changelog.
+  // Default value: the name of the project.
+  title = "${project.name} - Changelog"
+
+  // The output directory where the report is generated.
+  // Default value: main resource directory, or the "build" directory
+  outputDirectory = file("$projectDir")
+
+  // The name of the report to generate.
+  // Default value: CHANGELOG.md
+  fileName = "changelog.txt"
+
+  // The range of commits the changelog should be composed of.
+  // Default value: 'beginning' (i.e. full changelog)
+  // Possible values: 'beginning', 'last_tag', 'xxx'
+  //
+  // 'last_tag' will use all the commits since the last tag,
+  // 'beginning' will use all commits since the initial commit (default)
+  // 'xxx' will use all the tags since the 'xxx' Git reference (i.e. `since = 1.2.0` will display the changelog
+  //       since the 1.2.0 tag, excluding 1.2.0)
+  since = 'beginning'
+
+  // The output formats that should be generated.
+  // Default value: ['markdown']
+  // Possible values: 'html', 'markdown'.
+  formats = ['html', 'markdown']
+
+
+  // The Git "pretty" changelog commit format.
+  // Default value: %ad%x09%s (%an), which produces:
+  // Thu May 7 20:10:33 2015 -0400    Initial commit (Alex Selesse)
+  commitFormat = '%ad%x09%s'
+
+  // Specifies a commit format for Markdown.
+  // Default value: '* %s (%an)', which produces:
+  // * Initial commit (Alex Selesse)
+  markdown {
+    commitFormat = '* %s'
+  }
+
+  // Specifies a commit format for the HTML template.
+  // Default value: see commitFormat
+  html {
+    commitFormat = '%s'
+
+    // The Groovy HTML template used to generate the HTML changelog.
+    // See http://docs.groovy-lang.org/latest/html/documentation/template-engines.html
+    //    template = file("$projectDir/htmlTemplate").text
+  }
+
+  // A closure that returns 'true' if the line should be included in the changelog.
+  // Default value: accept everything, { true }
+  includeLines = {
+    !it.contains("Merge")
+  }
+
+  // A closure that transforms a changelog String.
+  // Default value: the identity closure, { it }
+  //
+  // For example, to remove '[ci skip]' from the changelog messages:
+  //processLines = {
+  //    String input = it as String
+  //    if (input.contains('[ci skip] ')) {
+  //        input = input.minus('[ci skip] ')
+  //    }
+  //    input
+  //}
+}
+
+// ------------------------------------------------------------------
+//                    AUTO RELEASE MANAGEMENT
+// Gets the version name from the latest Git tag
+// if no commit occurs -> the name of the tag likes 0.0.1
+// if commit occurs -> 0.0.1-12-aabb1122 (number of commits + version number)
+// ------------------------------------------------------------------
+def getVersionName(String revision) {
+  String newRevision = revision
+
+  if (!revision.endsWith('SNAPSHOT')) {
+    def stdout = new ByteArrayOutputStream()
+    exec {
+      commandLine 'git', 'describe', '--tags', '--always'
+      standardOutput = stdout
+    }
+    newRevision = stdout.toString().trim()
+  }
+  return newRevision
+}
+
+//
+// Check local git repo is synced with the remote
+//
+def isGitRepoSynced() {
+  def stdout = new ByteArrayOutputStream()
+  exec {
+    commandLine 'git', 'status', '-u', 'no', '--porcelain'
+    standardOutput = stdout
+  }
+
+  //
+  // Exclude Revision.java & gradle.properties
+  //
+  String val = stdout.toString().replaceAll(/.*\/Revision.java\n/, '')
+  val = val.replaceAll(/.*\/gradle.properties\n/, '')
+
+  return (0 == val.trim().size())
+}
+
+def boolean isDepRequired(String currentDep ) {
+  return requiredLibs.any { currentDep.equalsIgnoreCase(it) }
+}
+
+//
+// Tasks dependencies
+//
+//pack.dependsOn generateChangelog
+uploadArchives.dependsOn pack
+bintrayUpload.dependsOn pack
+
