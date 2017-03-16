@@ -1,4 +1,4 @@
-package io.warp10.spark2;
+package io.warp10.spark;
 
 import io.warp10.script.WarpScriptException;
 import io.warp10.spark.common.SparkUtils;
