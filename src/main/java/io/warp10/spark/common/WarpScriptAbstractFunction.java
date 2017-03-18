@@ -1,10 +1,13 @@
 package io.warp10.spark.common;
 
+import io.warp10.WarpConfig;
 import io.warp10.continuum.Configuration;
 import io.warp10.crypto.SipHashInline;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptExecutor;
 import io.warp10.script.WarpScriptExecutor.StackSemantics;
+import io.warp10.spark.Warp10Spark;
+
 import org.apache.spark.SparkFiles;
 
 import java.io.IOException;
@@ -16,6 +19,10 @@ import java.util.Map;
 
 public abstract class WarpScriptAbstractFunction implements Serializable {
 
+  static {
+    Warp10Spark.init();
+  }
+  
   //
   // variable to register Warpscript filename
   //
