@@ -9,6 +9,7 @@ import io.warp10.script.NamedWarpScriptFunction;
 import io.warp10.script.WarpScriptException;
 import io.warp10.script.WarpScriptStack;
 import io.warp10.script.WarpScriptStackFunction;
+import io.warp10.spark.common.SparkUtils;
 
 public class TOSPARKROW extends NamedWarpScriptFunction implements WarpScriptStackFunction {
   
