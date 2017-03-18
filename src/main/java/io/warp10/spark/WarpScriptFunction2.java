@@ -22,7 +22,11 @@ public class WarpScriptFunction2<T1, T2, R> extends WarpScriptAbstractFunction i
       stackInput.add(SparkUtils.fromSpark(v2));
       List<Object> stackResult = executor.exec(stackInput);
 
-      return (R) SparkUtils.toSpark(stackResult);
+      if (1 == stackResult.size()) {
+        return (R) SparkUtils.toSpark(stackResult.get(0));
+      } else {
+        return (R) SparkUtils.toSpark(stackResult);
+      }
     }
   }
 }

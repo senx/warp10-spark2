@@ -4,22 +4,26 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import com.google.common.base.Charsets;
+
 import io.warp10.continuum.gts.GTSDecoder;
 import io.warp10.continuum.gts.GTSHelper;
 import io.warp10.continuum.gts.GTSWrapperHelper;
 import io.warp10.continuum.store.thrift.data.GTSWrapper;
 import io.warp10.continuum.store.thrift.data.Metadata;
 import io.warp10.script.WarpScriptException;
+
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.spark.SparkFiles;
+import org.apache.spark.sql.Row;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
+
 import scala.Product;
+import scala.collection.Iterator;
 
 public class SparkUtils {
   public static Object fromSpark(Object o) {
@@ -52,14 +56,28 @@ public class SparkUtils {
         l.add(fromSpark(elt));
       }
       return l;
-    } else if (o instanceof Iterator) {
-      List<Object> l = new ArrayList<Object>();
-      while (((Iterator) o).hasNext()) {
-        l.add(fromSpark(((Iterator) o).next()));
+    } else if (o instanceof Row) {
+      List<Object> l = new ArrayList<Object>(((Row) o).size());      
+      Row row = (Row) o;
+      for (int i = 0; i < row.size(); i++) {
+        l.add(fromSpark(row.get(i)));
       }
       return l;
+    } else if (o instanceof Iterator || o instanceof scala.collection.Iterable) {
+      final Iterator<Object> siter = o instanceof Iterator ? (Iterator<Object>) o : ((scala.collection.Iterable<Object>) o).iterator();
+      return new java.util.Iterator<Object>() {
+        @Override
+        public boolean hasNext() {
+          return siter.hasNext();
+        }
+        @Override
+        public Object next() {
+          return siter.next();
+        }
+      };
     } else {
-      throw new RuntimeException("Encountered yet unsupported type: " + o.getClass());
+      return o;
+      //throw new RuntimeException("Encountered yet unsupported type: " + o.getClass());
     }
   }
 
@@ -81,7 +99,8 @@ public class SparkUtils {
       
       return l;
     } else {
-      throw new RuntimeException("Encountered yet unsupported type: " + o.getClass());
+      return o;
+      //throw new RuntimeException("Encountered yet unsupported type: " + o.getClass());
     }
   }
 
@@ -90,18 +109,21 @@ public class SparkUtils {
    * @param warpscriptFile name of the script to parse
    * @return String
    */
-  public static String parseScript(String warpscriptFile)
-      throws IOException, WarpScriptException {
-
+  public static String parseScript(String warpscriptFile) throws IOException, WarpScriptException {
     //
-    // Load the Warpscript file
+    // Load the WarpsScript file
     // Warning: provide target directory when file has been copied on each node
     //
     StringBuffer scriptSB = new StringBuffer();
     InputStream fis = null;
     BufferedReader br = null;
-    try {
-      fis = new FileInputStream(warpscriptFile);
+    try {      
+      File f = new File(SparkFiles.get(warpscriptFile));
+      if (!f.exists()) {
+        fis = SparkUtils.class.getClassLoader().getResourceAsStream(warpscriptFile);
+      } else {
+        fis = new FileInputStream(f);
+      }
       br = new BufferedReader(new InputStreamReader(fis, Charsets.UTF_8));
 
       while (true) {
@@ -112,7 +134,7 @@ public class SparkUtils {
         scriptSB.append(line).append("\n");
       }
     } catch (IOException ioe) {
-      throw new IOException("Warpscript file should not exist", ioe);
+      throw new IOException("WarpScript file could not be loaded", ioe);
     } finally {
       if (null == br) { try { br.close(); } catch (Exception e) {} }
       if (null == fis) { try { fis.close(); } catch (Exception e) {} }

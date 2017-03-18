@@ -103,7 +103,7 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
   
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.semantics = StackSemantics.valueOf(in.readUTF());
-    this.executor = (WarpScriptExecutor)in.readObject();
+    this.executor = (WarpScriptExecutor) in.readObject();
   }
 
   private void init(String code) throws WarpScriptException {
@@ -133,7 +133,7 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
                 keyHash.length);
 
         synchronized (executors) {
-          if (code.startsWith("@")) {
+          if (code.startsWith("@") || code.startsWith("%")) {
 
             //
             // delete the @ character
@@ -157,9 +157,9 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
             //
             String filePath = SparkFiles.get(filename);
 
-            String mc2FileContent = "'" + filePath + "' '" + WARPSCRIPT_FILE_VARIABLE + "' STORE " + SparkUtils.parseScript(filePath);
+            String mc2FileContent = "'" + filePath + "' '" + WARPSCRIPT_FILE_VARIABLE + "' STORE " + SparkUtils.parseScript(filename);
 
-            executor = new WarpScriptExecutor(this.semantics, mc2FileContent, null, null);
+            executor = new WarpScriptExecutor(this.semantics, mc2FileContent, null, null, code.startsWith("@"));
           } else {
 
             //
