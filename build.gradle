@@ -218,6 +218,14 @@ task pack(type: Jar, dependsOn: jar) {
   with jar
 }
 
+task packAll(type: Jar, dependsOn: pack) {
+  zip64 = true
+  appendix = 'all'
+
+  from zipTree(pack.archivePath)
+  from files(sourceSets.test.resources)
+}
+
 task packWithTests(type: Jar, dependsOn: pack) {
   zip64 = true
   appendix = 'tests'
