@@ -195,7 +195,6 @@ task pack(type: Jar, dependsOn: jar) {
     attributes("Implementation-Version": version)
   }
 
-  from files(sourceSets.main.output.classesDir)
   from {
     configurations.compile.collect {
       it.isDirectory() ? it : zipTree(it).matching {
@@ -205,6 +204,7 @@ task pack(type: Jar, dependsOn: jar) {
         exclude { it.toString().contains('parquet') }
         exclude { it.toString().contains('org.apache.hadoop') }
         exclude { it.toString().contains('org.apache.spark') }
+        exclude { it.toString().contains('org.scala') }
       }
     }
   } {
