@@ -124,6 +124,11 @@ public class SparkUtils {
       } else {
         fis = new FileInputStream(f);
       }
+      
+      if (null == fis) {
+        throw new IOException("WarpScript file '" + warpscriptFile + "' could not be found.");
+      }
+      
       br = new BufferedReader(new InputStreamReader(fis, Charsets.UTF_8));
 
       while (true) {
