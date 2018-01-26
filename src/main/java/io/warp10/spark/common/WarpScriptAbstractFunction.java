@@ -181,15 +181,17 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
 
             executor = new WarpScriptExecutor(this.semantics, mc2Content, null, null);
           }
-
           executors.put(key, executor);
-          this.executor = executor;
         }
-
       }
+      
+      this.executor = executor;
     } catch (IOException ioe) {
       throw new WarpScriptException(ioe);
     }
   }
-
+  
+  public WarpScriptExecutor getExecutor() {
+    return this.executor;
+  }
 }
