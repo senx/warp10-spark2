@@ -1,9 +1,9 @@
 package io.warp10.spark;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.logging.LogManager;
 
 import org.apache.spark.SparkFiles;
 
@@ -11,8 +11,11 @@ import io.warp10.WarpConfig;
 import io.warp10.script.WarpScriptLib;
 
 public class Warp10Spark {
+  
+  private static final String DISABLE_LOGGING = "disable.logging";
+  
   public static void init() {
-    try {
+    try {      
       if (null != System.getProperty(WarpConfig.WARP10_CONFIG)) {
         InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(System.getProperty(WarpConfig.WARP10_CONFIG));
         
@@ -28,7 +31,15 @@ public class Warp10Spark {
       // Register extensions
       //
       
-      WarpScriptLib.registerExtensions();      
+      WarpScriptLib.registerExtensions();
+      
+      //
+      // Disable logging
+      //
+      if ("true".equals(System.getProperty(DISABLE_LOGGING))) {
+        LogManager.getLogManager().reset();
+      }
+      
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
