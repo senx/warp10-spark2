@@ -1,5 +1,6 @@
 package io.warp10.spark;
 
+import io.warp10.script.functions.DUMP;
 import io.warp10.warp.sdk.WarpScriptExtension;
 
 import java.util.HashMap;
@@ -20,6 +21,8 @@ public class SparkWarpScriptExtension extends WarpScriptExtension {
     functions.put(SPARKTO, new SPARKTO(SPARKTO));
     functions.put(TOSPARKROW, new TOSPARKROW(TOSPARKROW));
     functions.put("PRINT", new PRINT("PRINT"));
+    // Expose DUMP
+    functions.put("DUMP", new DUMP("DUMP"));
   }
   
   @Override
