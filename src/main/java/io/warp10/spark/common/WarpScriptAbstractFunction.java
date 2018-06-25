@@ -81,7 +81,7 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
 
   public WarpScriptAbstractFunction(String... args) throws WarpScriptException {
     if (0 == args.length) {
-      throw new IllegalArgumentException("At least one parameter is required: Warpscript code");
+      throw new IllegalArgumentException("At least one parameter is required: WarpScript™ code");
     } else if ( 1 == args.length) {
       this.semantics = StackSemantics.PERTHREAD;
       setCode(args[0]);
