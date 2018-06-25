@@ -1,13 +1,14 @@
 package io.warp10.spark;
 
-import io.warp10.script.WarpScriptException;
-import io.warp10.spark.common.SparkUtils;
-import io.warp10.spark.common.WarpScriptAbstractFunction;
-import org.apache.spark.api.java.function.FlatMapFunction2;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.spark.api.java.function.FlatMapFunction2;
+
+import io.warp10.script.WarpScriptException;
+import io.warp10.spark.common.SparkUtils;
+import io.warp10.spark.common.WarpScriptAbstractFunction;
 
 public class WarpScriptFlatMapFunction2<T1, T2, R> extends WarpScriptAbstractFunction implements FlatMapFunction2<T1, T2, R> {
 
