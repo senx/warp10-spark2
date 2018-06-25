@@ -4,7 +4,10 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.google.common.base.Charsets;
 
@@ -16,6 +19,7 @@ import io.warp10.continuum.store.thrift.data.Metadata;
 import io.warp10.script.WarpScriptException;
 
 import org.apache.hadoop.io.BytesWritable;
+import org.apache.hadoop.io.NullWritable;
 import org.apache.spark.SparkFiles;
 import org.apache.spark.sql.Row;
 import org.apache.thrift.TDeserializer;
@@ -27,7 +31,7 @@ import scala.collection.Iterator;
 
 public class SparkUtils {
   public static Object fromSpark(Object o) {
-    if (null == o) {
+    if (null == o || o instanceof NullWritable) {
       return null;
     } else if (o instanceof String) {
       return o;
@@ -98,6 +102,14 @@ public class SparkUtils {
       }
       
       return l;
+    } else if (o instanceof Map) {
+      HashMap<Object,Object> map = new HashMap<Object,Object>();
+      
+      for (Entry<Object,Object> entry: ((Map<Object,Object>) o).entrySet()) {
+        map.put(toSpark(entry.getKey()), toSpark(entry.getValue()));
+      }
+      
+      return map;
     } else {
       return o;
       //throw new RuntimeException("Encountered yet unsupported type: " + o.getClass());
