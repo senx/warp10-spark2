@@ -8,6 +8,9 @@ import org.apache.spark.sql.catalyst.parser.LegacyTypeStringParser;
 import org.apache.spark.sql.expressions.MutableAggregationBuffer;
 import org.apache.spark.sql.expressions.UserDefinedAggregateFunction;
 import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StringType;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import io.warp10.script.WarpScriptException;
@@ -61,7 +64,7 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       List<Object> stackOutput = this.func.getExecutor().exec(stackInput);
       
       if (stackOutput.size() != buf.size()) {
-        throw new WarpScriptException("Invalid stack size in initialize, expecting " + buf.size() + " levels but got " + stackOutput.size());        
+        throw new WarpScriptException("Invalid stack size in merge, expecting " + buf.size() + " levels but got " + stackOutput.size());        
       }
       
       for (int i = 0; i < buf.size(); i++) {
@@ -73,7 +76,7 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
   }
   
   @Override
-  public void update(MutableAggregationBuffer buf, Row row) {    
+  public void update(MutableAggregationBuffer buf, Row row) {
     try {
       List<Object> stackInput = new ArrayList<Object>();
       stackInput.add("update");
@@ -82,7 +85,7 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       List<Object> stackOutput = this.func.getExecutor().exec(stackInput);
       
       if (stackOutput.size() != buf.size()) {
-        throw new WarpScriptException("Invalid stack size in initialize, expecting " + buf.size() + " levels but got " + stackOutput.size());        
+        throw new WarpScriptException("Invalid stack size in update, expecting " + buf.size() + " levels but got " + stackOutput.size());        
       }
       
       for (int i = 0; i < buf.size(); i++) {
