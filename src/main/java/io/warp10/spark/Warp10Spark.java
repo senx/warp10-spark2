@@ -1,6 +1,7 @@
 package io.warp10.spark;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.logging.LogManager;
@@ -20,9 +21,33 @@ public class Warp10Spark {
         InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(System.getProperty(WarpConfig.WARP10_CONFIG));
         
         if (null == in) {
-          in = new FileInputStream(SparkFiles.get(System.getProperty(WarpConfig.WARP10_CONFIG)));
+          try {
+            in = new FileInputStream(SparkFiles.get(System.getProperty(WarpConfig.WARP10_CONFIG)));
+          } catch (IOException ioe) {            
+          }
         }
+        
+        if (null == in) {
+          in = new FileInputStream(System.getProperty(WarpConfig.WARP10_CONFIG));
+        }
+
         WarpConfig.safeSetProperties(new InputStreamReader(in));
+      //} else if (System.getenv(WarpConfig.WARP10_CONFIG_ENV))
+      } else if (null != System.getenv("WARP10_CONFIG")) {
+        InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(System.getenv("WARP10_CONFIG"));
+
+        if (null == in) {
+          try {
+            in = new FileInputStream(SparkFiles.get(System.getenv("WARP10_CONFIG")));
+          } catch (IOException ioe) {           
+          }
+        }
+        
+        if (null == in) {
+          in = new FileInputStream(System.getenv("WARP10_CONFIG"));
+        }
+        
+        WarpConfig.safeSetProperties(new InputStreamReader(in));        
       } else {
         WarpConfig.safeSetProperties((String) null);
       }
