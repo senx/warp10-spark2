@@ -13,3 +13,4 @@ out/
 .idea/
 gradle.properties
 changelog.*
+/build-eclipse/
