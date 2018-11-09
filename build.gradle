@@ -134,7 +134,7 @@ repositories {
   }
 
   maven {
-    url 'https://dl.bintray.com/cityzendata/maven'
+    url 'https://dl.bintray.com/senx/maven'
   }
 
   maven {
@@ -152,7 +152,7 @@ dependencies {
   // WarpScript
   //
 
-  compile 'io.warp10:warpscript:1.2.23'
+  compile 'io.warp10:warpscript:1.2.26'
 
   testCompile group: 'junit', name: 'junit', version: '4.6'
 
@@ -269,9 +269,10 @@ bintray {
 
   pkg {
     repo = 'maven'
-    name = 'spark'
+    name = 'warp10-spark'
+    userOrg = 'senx'
     licenses = ['Apache-2.0']
-    vcsUrl = 'https://github.com/cityzendata/spark.git'
+    vcsUrl = 'https://github.com/senx/warp10-spark2.git'
     version {
       name = version
       released = new Date()
