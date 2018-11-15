@@ -119,14 +119,7 @@ repositories {
   mavenCentral()
   mavenLocal()
   maven {
-    url "http://maven.twttr.com"
-  }
-  // bedatadriven - http://www.renjin.org/#downloads
-  maven {
     url "http://nexus.bedatadriven.com/content/groups/public/"
-  }
-  maven {
-    url "http://repo.opengeo.org/"
   }
 
   maven {
@@ -135,10 +128,6 @@ repositories {
 
   maven {
     url 'https://dl.bintray.com/senx/maven'
-  }
-
-  maven {
-    url "http://127.0.0.1:40080/m2"
   }
 
 }
