@@ -1,0 +1,54 @@
+<%
+  {
+    'name' 'SPARK->'
+    'since' '1.0.0'
+    'deprecated' ''
+    'deleted' ''
+    'version' 'all'
+    'tags' [ 'extensions' ]
+    'desc' 
+      <'
+The `SPARK->` function converts objects coming from [Spark](https://spark.apache.org/) into their WarpScript™ counterpart according to the following conversion table:
+
+| Spark Type | WarpScript™ Type |
+|------------|------------------|
+| `null` | `NULL` |
+| `NullWritable` | `NULL` |
+| `String` | `STRING` |
+| `byte[]` | `BYTES` |
+| `BytesWritable` | `BYTES` |
+| `BigInteger` | `LONG` |
+| `Integer` | `LONG` |
+| `Short` | `LONG` |
+| `Byte` | `LONG` |
+| `BigDecimal` | `DOUBLE` |
+| `Double` | `DOUBLE` |
+| `Float` | `DOUBLE` |
+| `Product` | `LIST` |
+| `List` | `LIST` |
+| `Row` | `LIST` |
+| `Iterator` | `ITERABLE` |
+| `Iterable` | `ITERABLE` |
+
+A WarpScript™ `ITERABLE` can be iterated over using [`FOREACH`](https://warp10.io/doc/FOREACH).
+
+All other types are left unchanged.
+      '>
+    'sig' [ [ [ 'poolSize:LONG' 'macros:LIST' ]  [ 'result:LIST' ] ] ]
+    'params' {
+      'poolSize' 'Parallelism level'
+      'macros' 'List of macros'
+      'result' 'Result list'
+    }
+    'related' [ '->SPARK' '->SPARKROW' ]
+    'examples' [ 
+    ]
+    'conf' [ 'warpscript.extensions' ]
+    'ext' 'io.warp10.spark.SparkWarpScriptExtension'
+  } INFO
+<%  'SPARK->' EVAL %>
+<% %> <% %> TRY
+%>
+'macro' STORE
+// Unit tests
+$macro

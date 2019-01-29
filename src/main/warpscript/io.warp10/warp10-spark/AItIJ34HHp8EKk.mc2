@@ -1,0 +1,33 @@
+<%
+  {
+    'name' '->SPARKROW'
+    'since' '1.0.0'
+    'deprecated' ''
+    'deleted' ''
+    'version' 'all'
+    'tags' [ 'extensions' ]
+    'desc' 
+      <'
+The `->SPARKROW` function creates a Spark `Row` from a list. Such a row can be returned to become a record in a Spark DataFrame.
+
+The exact kind of `Row` created by `->SPARKROW` is [`org.apache.spark.sql.catalyst.expressions.GenericRow`](https://github.com/apache/spark/blob/master/sql/catalyst/src/main/scala/org/apache/spark/sql/catalyst/expressions/rows.scala#L166).
+
+The elements of the input list are converted according to the rules used by `->SPARK`.
+      '>
+    'sig' [ [ [ 'list:LIST' ]  [ 'row:ROW' ] ] ]
+    'params' {
+      'list' 'List to convert into a Spark Row.'
+      'row' 'GenericRow instance containing the converted elements from `list`.'
+    }
+    'related' [ 'SYNC' ]
+    'examples' [ 
+    ]
+    'conf' [ 'warpscript.extensions' ]
+    'ext' 'io.warp10.spark.SparkWarpScriptExtension'
+  } INFO
+<%  '->SPARKROW' EVAL %>
+<% %> <% %> TRY
+%>
+'macro' STORE
+// Unit tests
+$macro

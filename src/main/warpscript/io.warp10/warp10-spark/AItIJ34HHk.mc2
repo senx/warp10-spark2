@@ -1,0 +1,40 @@
+<%
+  {
+    'name' '->SPARK'
+    'since' '1.0.0'
+    'deprecated' ''
+    'deleted' ''
+    'version' 'all'
+    'tags' [ 'extensions' ]
+    'desc' 
+      <'
+The `->SPARK` function converts objects from a WarpScript™ stack into their [Spark](https://spark.apache.org/) counterpart according to the following conversion table:
+
+| WarpScript™ Type | Spark Type |
+|------------|------------------|
+| `NULL` | `null` |
+| `STRING` | `String` |
+| `BYTES` | `byte[]` |
+| `NUMBER` | `Number` |
+| `LIST` | `List` |
+| `MAP` | `Map` |
+
+All other types are left unchanged.
+      '>
+    'sig' [ [ [ 'object:ANY' ]  [ 'sparkObject:ANY' ] ] ]
+    'params' {
+      'sparkObject' 'Java Object suitable for manipulation in Spark.'
+      'object' 'WarpScript™ object.'
+    }
+    'related' [ 'SPARK->' '->SPARKROW' ]
+    'examples' [ 
+    ]
+    'conf' [ 'warpscript.extensions' ]
+    'ext' 'io.warp10.spark.SparkWarpScriptExtension'
+  } INFO
+<%  '->SPARK' EVAL %>
+<% %> <% %> TRY
+%>
+'macro' STORE
+// Unit tests
+$macro

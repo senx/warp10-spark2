@@ -1,0 +1,33 @@
+<%
+  {
+    'name' 'PRINT'
+    'since' '1.0.0'
+    'deprecated' ''
+    'deleted' ''
+    'version' 'all'
+    'tags' [ 'extensions' ]
+    'desc' 
+      <'
+The `PRINT` function outputs a string representation of the element on top of the stack onto the standard output of the process executing the WarpScript™ fragment that contains it.
+
+This is handy to debug the WarpScript™ code executed by your Spark jobs.
+      '>
+    'sig' [ [ [ 'object:ANY' ]  [] ] ]
+    'params' {
+      'object' 'Object to print on `stdout`.'
+    }
+    'related' []
+    'examples' [ 
+<'
+  'Hello, Spark.' PRINT
+'>
+    ]
+    'conf' [ 'warpscript.extensions' ]
+    'ext' 'io.warp10.spark.SparkWarpScriptExtension'
+  } INFO
+<%  'PRINT' EVAL %>
+<% %> <% %> TRY
+%>
+'macro' STORE
+// Unit tests
+$macro
