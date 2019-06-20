@@ -35,6 +35,7 @@ public class SparkWarpScriptExtension extends WarpScriptExtension {
     functions.put(TOSPARK, new TOSPARK(TOSPARK));
     functions.put(SPARKTO, new SPARKTO(SPARKTO));
     functions.put(TOSPARKROW, new TOSPARKROW(TOSPARKROW));
+    functions.put("ROWCOLS", new ROWCOLS("ROWCOLS"));
     functions.put("PRINT", new PRINT("PRINT"));
     // Expose DUMP
     functions.put("DUMP", new DUMP("DUMP"));
