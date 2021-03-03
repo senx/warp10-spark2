@@ -26,6 +26,7 @@ public class SparkWarpScriptExtension extends WarpScriptExtension {
   public static final String TOSPARK = "->SPARK";
   public static final String SPARKTO = "SPARK->";
   public static final String TOSPARKROW = "->SPARKROW";
+  public static final String SPARKSCHEMA = "SPARKSCHEMA";
   
   private static final Map<String,Object> functions;
   
@@ -37,8 +38,9 @@ public class SparkWarpScriptExtension extends WarpScriptExtension {
     functions.put(TOSPARKROW, new TOSPARKROW(TOSPARKROW));
     functions.put("ROWCOLS", new ROWCOLS("ROWCOLS"));
     functions.put("PRINT", new PRINT("PRINT"));
+    functions.put(SPARKSCHEMA, new SPARKSCHEMA(SPARKSCHEMA));
     // Expose DUMP
-    functions.put("DUMP", new DUMP("DUMP"));
+    functions.put("DUMP", new DUMP("DUMP"));   
   }
   
   @Override
