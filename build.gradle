@@ -1,5 +1,5 @@
 //
-//   Copyright 2018  SenX S.A.S.
+//   Copyright 2018-2021  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 buildscript {
   repositories {
-    jcenter()
     maven {
       url "https://plugins.gradle.org/m2"
     }
@@ -112,16 +111,10 @@ sourceSets {
 }
 
 repositories {
-  jcenter()
   mavenCentral()
-  mavenLocal()
-  maven {
-    url 'https://dl.bintray.com/hbs/maven'
-  }
   maven {
     url 'https://dl.bintray.com/senx/maven'
   }
-
 }
 
 // GLOBAL DEPENDENCIES
@@ -133,7 +126,7 @@ dependencies {
   // WarpScript
   //
 
-  compile 'io.warp10:warpscript:2.5.0'
+  compile 'io.warp10:warpscript:2.7.5'
 
   testCompile group: 'junit', name: 'junit', version: '4.6'
 
@@ -213,20 +206,6 @@ task packWithTests(type: Jar, dependsOn: pack) {
 
   from zipTree(pack.archivePath)
   from sourceSets.test.output
-}
-
-// DEPLOY ON MAVEN REPO WITH SCP
-uploadArchives {
-  repositories {
-    repositories.mavenDeployer {
-      configuration = configurations.deployerJars
-      uniqueVersion = false
-
-      repository(url: "scpexe://${stagingURL}") {
-        authentication(userName: "${stagingUser}")
-      }
-    }
-  }
 }
 
 // custom tasks for creating source/javadoc jars
