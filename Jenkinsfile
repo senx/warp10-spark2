@@ -44,7 +44,7 @@ pipeline {
                 message "Should we deploy libs?"
             }
             steps {
-                sh './gradlew $GRADLE_ARGS clean jar sourcesJar javadocJar publishMavenPublicationToNexusRepository -x test'
+                sh './gradlew $GRADLE_ARGS clean jar sourcesJar javadocJar publishSparkPublicationToNexusRepository -x test'
             }
         }
 
@@ -61,7 +61,7 @@ pipeline {
                         message 'Should we deploy to Maven Central?'
                     }
                     steps {
-                        sh './gradlew clean jar sourcesJar javadocJar publishMavenPublicationToMavenRepository -x test $GRADLE_ARGS'
+                        sh './gradlew clean jar sourcesJar javadocJar publishAllPublicationsToMavenRepository -x test $GRADLE_ARGS'
                         sh './gradlew closeRepository $GRADLE_ARGS'
                         sh './gradlew releaseRepository $GRADLE_ARGS'
                         this.notifyBuild('PUBLISHED', version)
