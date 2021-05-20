@@ -26,59 +26,35 @@ buildscript {
 }
 
 plugins {
-  id "com.selesse.git.changelog" version "0.2.0"
-  id 'java';
-  id 'maven';
+  id 'net.nemerosa.versioning' version '2.14.0'
+  id 'io.codearte.nexus-staging' version '0.22.0'
+  id 'java'
+  id 'java-library'
+  id 'idea'
+  id 'eclipse'
+  id 'maven-publish'
+  id 'signing'
 }
 
-apply plugin: 'eclipse';
-apply plugin: 'idea';
-apply plugin: 'maven-publish';
+project.group = 'io.warp10'
+project.description = 'Warp 10 Spark Integration'
 
-group = 'io.warp10'
+// If the current tag is set, then it's a new release. Don't add build number
+project.version = versioning.info.lastTag + ((versioning.info.tag != null) ? '' : '-' + versioning.info.build)
 
-archivesBaseName = 'warp10-spark'
-version = getVersionName('')
+//
+// Repositories for the project dependencies
+//
 
-ext {
-  stagingUser = project.hasProperty('stagingUser') ? project.property('stagingUser') : System.getenv('STAGING_USER')
-  stagingURL = project.hasProperty('stagingURL') ? project.property('stagingURL') : System.getenv('STAGING_URL')
-
-  if (null == stagingUser || null == stagingURL) {
-    stagingUser = ''
-    stagingURL = ''
-  }
-
-  sparkPublishUser = project.hasProperty('sparkPublishUser') ? project.property('sparkPublishUser') : System.getenv('WARP10_SPARK_PUBLISH_USER')
-  sparkPublishURL = project.hasProperty('sparkPublishURL') ? project.property('sparkPublishURL') : System.getenv('WARP10_SPARK_PUBLISH_URL')
-
-  if (null == sparkPublishUser || null == sparkPublishURL) {
-    sparkPublishUser = stagingUser
-    sparkPublishURL = stagingURL
-  }
-
-  gradle.taskGraph.whenReady { graph ->
-    println "building spark version=$version"
-    if (graph.hasTask(uploadArchives)) {
-      //if (!(version ==~ /\d+\.\d+\.\d+\-\d+\-\w+/)) {
-      //    throw new GradleException("Cannot upload archive: version ${version} is not correct (X.X.X-X-X)")
-      //}
-
-      if (!isGitRepoSynced()) {
-        throw new GradleException("Cannot upload archive: local repo contains uncommited files (git status -u no --porcelain)")
-      }
-    }
-
-  }
+repositories {
+    mavenCentral()
 }
 
-//
-// Configurations scp uploadArchives task
-//
 configurations {
-  deployerJars
   provided
 }
+
+archivesBaseName = 'warp10-spark'
 
 //
 // Force versions
@@ -102,47 +78,71 @@ configurations.all {
 // MUST appear before 'dependencies' so all source sets are known
 //
 
+test {
+  useJUnit()
+}
+
 sourceSets {
   main {
-    compileClasspath += configurations.provided
+    compileClasspath = compileClasspath + configurations.provided
   }
 }
 
-repositories {
-  mavenCentral()
+eclipse.classpath.plusConfigurations += [configurations.provided]  // Eclipse users only
+
+// for IntelliJ users
+idea {
+  module {
+    scopes.PROVIDED.plus += [configurations.provided]
+  }
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+jar {
+  manifest {
+        attributes('WarpFleet-Description': project.description)
+        attributes('WarpFleet-Group': project.group)
+        attributes('WarpFleet-Artifact': project.name)
+        attributes('WarpFleet-Version': project.version)
+  }
+
+  from('src/main/warpscript') {
+    //
+    // Only consider macros which are in our namespace
+    //
+    include project.group + '/' + project.name + '/*.mc2'
+    include project.group + '/' + project.name + '/**/*.mc2'
+  }
+
+  from('.') {
+      include 'README.md'
+      include project.group + '-' + project.name + '.conf'
+  }
 }
 
 // GLOBAL DEPENDENCIES
 dependencies {
-  //UPLOAD ARTIFACTS THROUGH SSH
-  deployerJars 'org.apache.maven.wagon:wagon-ssh-external:2.8'
-
   //
   // WarpScript
   //
 
-  compile 'io.warp10:warpscript:2.8.1'
+  compileOnly 'io.warp10:warpscript:2.8.1'
 
-  testCompile group: 'junit', name: 'junit', version: '4.6'
+  testCompileOnly 'io.warp10:warpscript:2.8.1'
+  testImplementation 'junit:junit:4.12'
+
 
   //
   // Apache Spark
   //
-  compile 'org.apache.spark:spark-core_2.11:2.2.3'
-  compile 'org.apache.spark:spark-sql_2.11:2.2.3'
+  implementation 'org.apache.spark:spark-core_2.11:2.2.3'
+  implementation 'org.apache.spark:spark-sql_2.11:2.2.3'
 }
 
-//
-// IDE CONFIGURATIONS
-//
-// IDEA DEFAULT CONFIGURATION
-idea {
-  module {
-    inheritOutputDirs = true
-    // add build/classes directory to excluded folders: index bytecode is not a really good idea ;)
-    excludeDirs += file('build')
-  }
-}
 // ECLIPSE
 eclipse {
   classpath {
@@ -202,135 +202,85 @@ task packWithTests(type: Jar, dependsOn: pack) {
   from sourceSets.test.output
 }
 
-// custom tasks for creating source/javadoc jars
-task sourcesJar(type: Jar, dependsOn: classes) {
-  classifier = 'sources'
-  from sourceSets.main.allSource
-}
-
 publishing {
   publications {
     spark(MavenPublication) {
-      from components.java 
-      groupId 'io.warp10'
-      artifactId archivesBaseName
-      version version
+      groupId project.group
+      artifactId project.name
+      version = project.version
+      from components.java
 
-      artifact sourcesJar
+      pom {
+        name = project.name
+        description = project.description
+        url = 'https://github.com/senx/' + project.name
+
+        scm {
+          connection = 'scm:git:git://github.com/senx/' + project.name
+          developerConnection = 'scm:git:ssh://github.com/senx/' + project.name
+          url = 'https://github.com/senx/' + project.name
+        }
+
+        licenses {
+          license {
+            name = 'The Apache License, Version 2.0'
+            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          }
+        }
+
+        developers {
+          developer {
+            id = 'senx'
+            name = 'SenX'
+            email = 'contact@senx.io'
+          }
+        }
+      }
+    }
+  }
+  repositories {
+    if (project.hasProperty('ossrhUsername')) {
+      maven {
+        url 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+        credentials {
+          username ossrhUsername
+          password ossrhPassword
+        }
+      }
+    }
+    if (project.hasProperty('nexusUsername')) {
+      maven {
+        name 'nexus'
+        allowInsecureProtocol true
+        url "$nexusHost/repository/maven-releases/"
+        credentials {
+          username nexusUsername
+          password nexusPassword
+        }
+      }
     }
   }
 }
 
-changelog {
-  // The title appears at the top of the changelog.
-  // Default value: the name of the project.
-  title = "${project.name} - Changelog"
-
-  // The output directory where the report is generated.
-  // Default value: main resource directory, or the "build" directory
-  outputDirectory = file("$projectDir")
-
-  // The name of the report to generate.
-  // Default value: CHANGELOG.md
-  fileName = "changelog.txt"
-
-  // The range of commits the changelog should be composed of.
-  // Default value: 'beginning' (i.e. full changelog)
-  // Possible values: 'beginning', 'last_tag', 'xxx'
-  //
-  // 'last_tag' will use all the commits since the last tag,
-  // 'beginning' will use all commits since the initial commit (default)
-  // 'xxx' will use all the tags since the 'xxx' Git reference (i.e. `since = 1.2.0` will display the changelog
-  //       since the 1.2.0 tag, excluding 1.2.0)
-  since = 'beginning'
-
-  // The output formats that should be generated.
-  // Default value: ['markdown']
-  // Possible values: 'html', 'markdown'.
-  formats = ['html', 'markdown']
-
-
-  // The Git "pretty" changelog commit format.
-  // Default value: %ad%x09%s (%an), which produces:
-  // Thu May 7 20:10:33 2015 -0400    Initial commit (Alex Selesse)
-  commitFormat = '%ad%x09%s'
-
-  // Specifies a commit format for Markdown.
-  // Default value: '* %s (%an)', which produces:
-  // * Initial commit (Alex Selesse)
-  markdown {
-    commitFormat = '* %s'
-  }
-
-  // Specifies a commit format for the HTML template.
-  // Default value: see commitFormat
-  html {
-    commitFormat = '%s'
-
-    // The Groovy HTML template used to generate the HTML changelog.
-    // See http://docs.groovy-lang.org/latest/html/documentation/template-engines.html
-    //    template = file("$projectDir/htmlTemplate").text
-  }
-
-  // A closure that returns 'true' if the line should be included in the changelog.
-  // Default value: accept everything, { true }
-  includeLines = {
-    !it.contains("Merge")
-  }
-
-  // A closure that transforms a changelog String.
-  // Default value: the identity closure, { it }
-  //
-  // For example, to remove '[ci skip]' from the changelog messages:
-  //processLines = {
-  //    String input = it as String
-  //    if (input.contains('[ci skip] ')) {
-  //        input = input.minus('[ci skip] ')
-  //    }
-  //    input
-  //}
+artifacts {
+    archives jar, javadocJar, sourcesJar
 }
 
-// ------------------------------------------------------------------
-//                    AUTO RELEASE MANAGEMENT
-// Gets the version name from the latest Git tag
-// if no commit occurs -> the name of the tag likes 0.0.1
-// if commit occurs -> 0.0.1-12-aabb1122 (number of commits + version number)
-// ------------------------------------------------------------------
-def getVersionName(String version) {
-  String newRevision = version
-
-  if (!version.endsWith('SNAPSHOT')) {
-    def stdout = new ByteArrayOutputStream()
-    exec {
-      commandLine 'git', 'describe', '--tags', '--always'
-      standardOutput = stdout
-    }
-    newRevision = stdout.toString().trim()
+if (project.hasProperty('ossrhUsername')) {
+  nexusStaging {
+    packageGroup = 'io.warp10'
+    username ossrhUsername
+    password ossrhPassword
   }
-  return newRevision
 }
 
 //
-// Check local git repo is synced with the remote
+// Artifact Signing
 //
-def isGitRepoSynced() {
-  def stdout = new ByteArrayOutputStream()
-  exec {
-    commandLine 'git', 'status', '-u', 'no', '--porcelain'
-    standardOutput = stdout
+if (project.hasProperty('signing.gnupg.keyName')) {
+  signing {
+        useGpgCmd()
+        sign publishing.publications
   }
-
-  //
-  // Exclude Revision.java & gradle.properties
-  //
-  String val = stdout.toString().replaceAll(/.*\/Revision.java\n/, '')
-  val = val.replaceAll(/.*\/gradle.properties\n/, '')
-
-  return (0 == val.trim().size())
 }
 
-//
-// Tasks dependencies
-//
-uploadArchives.dependsOn pack
