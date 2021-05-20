@@ -16,7 +16,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 this.notifyBuild('STARTED', version)
-                git poll: false, url: 'git@github.com:senx/warp10-spark.git'
+                git poll: false, url: 'git@github.com:senx/warp10-spark2.git'
                 sh 'git checkout master'
                 sh 'git fetch --tags'
                 sh 'git pull origin master'
