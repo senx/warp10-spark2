@@ -139,8 +139,8 @@ dependencies {
   //
   // Apache Spark
   //
-  implementation 'org.apache.spark:spark-core_2.11:2.2.3'
-  implementation 'org.apache.spark:spark-sql_2.11:2.2.3'
+  compileOnly 'org.apache.spark:spark-core_2.11:2.2.3'
+  compileOnly 'org.apache.spark:spark-sql_2.11:2.2.3'
 }
 
 // ECLIPSE
