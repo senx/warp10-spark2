@@ -130,7 +130,7 @@ dependencies {
   // WarpScript
   //
 
-  compileOnly 'io.warp10:warpscript:2.8.1'
+  implementation 'io.warp10:warpscript:2.8.1'
 
   testCompileOnly 'io.warp10:warpscript:2.8.1'
   testImplementation 'junit:junit:4.12'
