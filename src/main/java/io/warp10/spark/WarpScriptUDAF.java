@@ -1,5 +1,5 @@
 //
-//   Copyright 2018  SenX S.A.S.
+//   Copyright 2018-2021  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
   private StructType inputSchema = null;
   private StructType bufferSchema = null;
   private DataType dataType = null;
-  
+
   private final WarpScriptAbstractFunction func;
-  
+
   public WarpScriptUDAF(String mc2) {
     try {
       this.func = new WarpScriptAbstractFunction(mc2) {};
@@ -48,7 +48,7 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       throw new RuntimeException(wse);
     }
   }
-  
+
   @Override
   public void initialize(MutableAggregationBuffer buf) {
     try {
@@ -56,11 +56,11 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       stackInput.add("initialize");
       stackInput.add(SparkUtils.fromSpark(buf));
       List<Object> stackOutput = this.func.getExecutor().exec(stackInput);
-      
+
       if (stackOutput.size() != buf.size()) {
-        throw new WarpScriptException("Invalid stack size in initialize, expecting " + buf.size() + " levels but got " + stackOutput.size());        
+        throw new WarpScriptException("Invalid stack size in initialize, expecting " + buf.size() + " levels but got " + stackOutput.size());
       }
-      
+
       for (int i = 0; i < buf.size(); i++) {
         buf.update(i, stackOutput.get(i));
       }
@@ -68,7 +68,7 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       throw new RuntimeException(wse);
     }
   }
-  
+
   @Override
   public void merge(MutableAggregationBuffer buf, Row row) {
     try {
@@ -77,11 +77,11 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       stackInput.add(SparkUtils.fromSpark(row));
       stackInput.add(SparkUtils.fromSpark(buf));
       List<Object> stackOutput = this.func.getExecutor().exec(stackInput);
-      
+
       if (stackOutput.size() != buf.size()) {
-        throw new WarpScriptException("Invalid stack size in merge, expecting " + buf.size() + " levels but got " + stackOutput.size());        
+        throw new WarpScriptException("Invalid stack size in merge, expecting " + buf.size() + " levels but got " + stackOutput.size());
       }
-      
+
       for (int i = 0; i < buf.size(); i++) {
         buf.update(i, stackOutput.get(i));
       }
@@ -89,7 +89,7 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       throw new RuntimeException(wse);
     }
   }
-  
+
   @Override
   public void update(MutableAggregationBuffer buf, Row row) {
     try {
@@ -98,11 +98,11 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       stackInput.add(SparkUtils.fromSpark(row));
       stackInput.add(SparkUtils.fromSpark(buf));
       List<Object> stackOutput = this.func.getExecutor().exec(stackInput);
-      
+
       if (stackOutput.size() != buf.size()) {
-        throw new WarpScriptException("Invalid stack size in update, expecting " + buf.size() + " levels but got " + stackOutput.size());        
+        throw new WarpScriptException("Invalid stack size in update, expecting " + buf.size() + " levels but got " + stackOutput.size());
       }
-      
+
       for (int i = 0; i < buf.size(); i++) {
         buf.update(i, stackOutput.get(i));
       }
@@ -110,79 +110,79 @@ public class WarpScriptUDAF extends UserDefinedAggregateFunction {
       throw new RuntimeException(wse);
     }
   }
-  
+
   @Override
   public Object evaluate(Row row) {
     try {
       List<Object> stackInput = new ArrayList<Object>();
       stackInput.add("evaluate");
       stackInput.add(SparkUtils.fromSpark(row));
-      
+
       List<Object> stackResult = this.func.getExecutor().exec(stackInput);
 
       if (1 == stackResult.size()) {
-        return SparkUtils.toSpark(stackResult.get(0));        
+        return SparkUtils.toSpark(stackResult.get(0));
       } else {
         return SparkUtils.toSpark(stackResult);
-      }      
+      }
     } catch (WarpScriptException wse) {
       throw new RuntimeException(wse);
     }
   }
-  
+
   @Override
   public boolean deterministic() {
     return this.deterministic;
   }
-  
+
   @Override
   public StructType inputSchema() {
     return this.inputSchema;
   }
-  
+
   @Override
   public StructType bufferSchema() {
     return this.bufferSchema;
   }
-  
+
   @Override
   public DataType dataType() {
     return this.dataType;
   }
-  
+
   public UserDefinedAggregateFunction setDeterministic(boolean deterministic) {
     this.deterministic = deterministic;
     return this;
   }
-  
+
   public UserDefinedAggregateFunction setInputSchema(String inputSchema) {
     try {
       DataType type = DataType.fromJson(inputSchema);
       this.inputSchema = (StructType) type;
     } catch(IllegalArgumentException iae) {
-      DataType type = LegacyTypeStringParser.parse(inputSchema);
+      DataType type = LegacyTypeStringParser.parseString(inputSchema);
       this.inputSchema = (StructType) type;
     }
     return this;
   }
-  
+
   public UserDefinedAggregateFunction setBufferSchema(String bufferSchema) {
     try {
       DataType type = DataType.fromJson(bufferSchema);
       this.bufferSchema = (StructType) type;
     } catch(IllegalArgumentException iae) {
-      DataType type = LegacyTypeStringParser.parse(bufferSchema);
+      DataType type = LegacyTypeStringParser.parseString(bufferSchema);
       this.bufferSchema = (StructType) type;
     }
     return this;
   }
-  
+
   public UserDefinedAggregateFunction setDataType(String dataType) {
     try {
       DataType type = DataType.fromJson(dataType);
       this.dataType = type;
     } catch(IllegalArgumentException iae) {
-      DataType type = LegacyTypeStringParser.parse(dataType);
+      DataType type = LegacyTypeStringParser.parseString(dataType);
       this.dataType = type;
     }
     return this;
