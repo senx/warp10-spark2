@@ -33,7 +33,7 @@ public class Warp10Spark {
 
   public static void init() {
     try {
-      if (null != SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG)) {
+      if (null != SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG, null)) {
         // Force the Java property to be set to the same config file so other parts of Warp 10 behave correctly
         // even though the config was set via Spark
         System.setProperty(WarpConfig.WARP10_CONFIG, SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG));
