@@ -206,7 +206,7 @@ publishing {
   publications {
     spark(MavenPublication) {
       groupId project.group
-      artifactId project.name
+      artifactId 'warp10-spark' //project.name
       version = project.version
       from components.java
 
