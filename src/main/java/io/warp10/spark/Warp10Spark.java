@@ -1,5 +1,5 @@
 //
-//   Copyright 2018  SenX S.A.S.
+//   Copyright 2018-2022  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -22,26 +22,42 @@ import java.io.InputStreamReader;
 import java.util.logging.LogManager;
 
 import org.apache.spark.SparkFiles;
+import org.apache.spark.sql.SparkSession;
 
 import io.warp10.WarpConfig;
 import io.warp10.script.WarpScriptLib;
 
 public class Warp10Spark {
-  
+
   private static final String DISABLE_LOGGING = "disable.logging";
-  
+
   public static void init() {
-    try {      
-      if (null != System.getProperty(WarpConfig.WARP10_CONFIG)) {
+    try {
+      if (null != SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG)) {
+        InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG));
+
+        if (null == in) {
+          try {
+            in = new FileInputStream(SparkFiles.get(SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG)));
+          } catch (IOException ioe) {
+          }
+        }
+
+        if (null == in) {
+          in = new FileInputStream(SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG));
+        }
+
+        WarpConfig.safeSetProperties(new InputStreamReader(in));
+      } else if (null != System.getProperty(WarpConfig.WARP10_CONFIG)) {
         InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(System.getProperty(WarpConfig.WARP10_CONFIG));
-        
+
         if (null == in) {
           try {
             in = new FileInputStream(SparkFiles.get(System.getProperty(WarpConfig.WARP10_CONFIG)));
-          } catch (IOException ioe) {            
+          } catch (IOException ioe) {
           }
         }
-        
+
         if (null == in) {
           in = new FileInputStream(System.getProperty(WarpConfig.WARP10_CONFIG));
         }
@@ -54,32 +70,32 @@ public class Warp10Spark {
         if (null == in) {
           try {
             in = new FileInputStream(SparkFiles.get(System.getenv("WARP10_CONFIG")));
-          } catch (IOException ioe) {           
+          } catch (IOException ioe) {
           }
         }
-        
+
         if (null == in) {
           in = new FileInputStream(System.getenv("WARP10_CONFIG"));
         }
-        
-        WarpConfig.safeSetProperties(new InputStreamReader(in));        
+
+        WarpConfig.safeSetProperties(new InputStreamReader(in));
       } else {
         WarpConfig.safeSetProperties((String) null);
       }
-      
+
       //
       // Register extensions
       //
-      
+
       WarpScriptLib.registerExtensions();
-      
+
       //
       // Disable logging
       //
       if ("true".equals(System.getProperty(DISABLE_LOGGING))) {
         LogManager.getLogManager().reset();
       }
-      
+
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
