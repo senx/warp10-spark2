@@ -51,6 +51,24 @@ public class Warp10Spark {
         }
 
         WarpConfig.safeSetProperties(new InputStreamReader(in));
+      } else if (null != SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG, null)) {
+        // Force the Java property to be set to the same config file so other parts of Warp 10 behave correctly
+        // even though the config was set via Spark
+        System.setProperty(WarpConfig.WARP10_CONFIG, SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG));
+        InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG));
+
+        if (null == in) {
+          try {
+            in = new FileInputStream(SparkFiles.get(SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG)));
+          } catch (IOException ioe) {
+          }
+        }
+
+        if (null == in) {
+          in = new FileInputStream(SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG));
+        }
+
+        WarpConfig.safeSetProperties(new InputStreamReader(in));
       } else if (null != System.getProperty(WarpConfig.WARP10_CONFIG)) {
         InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(System.getProperty(WarpConfig.WARP10_CONFIG));
 
