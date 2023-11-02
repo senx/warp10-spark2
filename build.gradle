@@ -116,17 +116,17 @@ dependencies {
   // WarpScript
   //
 
-  implementation 'io.warp10:warpscript:3.0.3'
+  implementation 'io.warp10:warpscript:3.1.0'
 
-  testCompileOnly 'io.warp10:warpscript:3.0.3'
+  testCompileOnly 'io.warp10:warpscript:3.1.0'
   testImplementation 'junit:junit:4.13.2'
 
 
   //
   // Apache Spark
   //
-  compileOnly 'org.apache.spark:spark-core_2.12:3.1.2'
-  compileOnly 'org.apache.spark:spark-sql_2.12:3.1.2'
+  compileOnly 'org.apache.spark:spark-core_2.12:3.4.1'
+  compileOnly 'org.apache.spark:spark-sql_2.12:3.4.1'
 }
 
 // ECLIPSE
