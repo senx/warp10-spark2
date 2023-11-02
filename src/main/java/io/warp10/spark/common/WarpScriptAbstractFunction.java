@@ -1,5 +1,5 @@
 //
-//   Copyright 2018  SenX S.A.S.
+//   Copyright 2018-2023  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -15,16 +15,6 @@
 //
 package io.warp10.spark.common;
 
-import io.warp10.WarpConfig;
-import io.warp10.continuum.Configuration;
-import io.warp10.crypto.SipHashInline;
-import io.warp10.script.WarpScriptException;
-import io.warp10.script.WarpScriptExecutor;
-import io.warp10.script.WarpScriptExecutor.StackSemantics;
-import io.warp10.spark.Warp10Spark;
-
-import org.apache.spark.SparkFiles;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
@@ -32,12 +22,21 @@ import java.nio.file.Paths;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.spark.SparkFiles;
+
+import io.warp10.continuum.Configuration;
+import io.warp10.crypto.SipHashInline;
+import io.warp10.script.WarpScriptException;
+import io.warp10.script.WarpScriptExecutor;
+import io.warp10.script.WarpScriptExecutor.StackSemantics;
+import io.warp10.spark.Warp10Spark;
+
 public abstract class WarpScriptAbstractFunction implements Serializable {
 
   static {
     Warp10Spark.init();
   }
-  
+
   //
   // variable to register Warpscript filename
   //
@@ -47,7 +46,7 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
   // variable to register hash computed onto Warpscript commands
   //
   public static final String WARPSCRIPT_ID_VARIABLE = "warpscript.id";
-  
+
   private StackSemantics semantics;
 
   //
@@ -122,7 +121,7 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
     out.writeUTF(this.semantics.toString());
     out.writeObject(this.executor);
   }
-  
+
   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
     this.semantics = StackSemantics.valueOf(in.readUTF());
     this.executor = (WarpScriptExecutor) in.readObject();
@@ -199,13 +198,13 @@ public abstract class WarpScriptAbstractFunction implements Serializable {
           executors.put(key, executor);
         }
       }
-      
+
       this.executor = executor;
     } catch (IOException ioe) {
       throw new WarpScriptException(ioe);
     }
   }
-  
+
   public WarpScriptExecutor getExecutor() {
     return this.executor;
   }

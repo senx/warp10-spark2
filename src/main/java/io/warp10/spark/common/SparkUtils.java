@@ -1,5 +1,5 @@
 //
-//   Copyright 2018-2022  SenX S.A.S.
+//   Copyright 2018-2023  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import org.apache.hadoop.io.NullWritable;
 import org.apache.spark.SparkFiles;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.rdd.RDD;
 import org.apache.spark.sql.Row;
 
 import com.google.common.base.Charsets;
@@ -43,6 +45,7 @@ import io.warp10.script.WarpScriptException;
 import io.warp10.spark.Warp10Spark;
 import scala.Product;
 import scala.collection.Iterator;
+import scala.collection.JavaConverters;
 
 public class SparkUtils {
 
@@ -126,7 +129,7 @@ public class SparkUtils {
         map.put(toSpark(entry.getKey()), toSpark(entry.getValue()));
       }
 
-      return map;
+      return JavaConverters.mapAsScalaMapConverter(map).asScala();
     } else {
       return o;
       //throw new RuntimeException("Encountered yet unsupported type: " + o.getClass());
@@ -190,5 +193,24 @@ public class SparkUtils {
       conf.set(entry.getKey(), entry.getValue());
     }
     prdd.saveAsNewAPIHadoopFile(path, keyClass, valueClass, outputFormatClass, conf);
+  }
+
+  public static RDD newAPIHadoopRDD(JavaSparkContext sc, String ifc, String kc, String vc, Map<String,String> cf) throws Exception {
+    // We MUST call Warp10Spark.init() so we ensure that extensions are loaded and hence we can find any OutputFormat which
+    // may come as part of an extension (i.e. HFile)
+    Warp10Spark.init();
+    Class keyClass = SparkUtils.class.forName(kc);
+    Class valueClass = SparkUtils.class.forName(vc);
+    Class inputFormatClass = SparkUtils.class.forName(ifc);
+    Configuration conf = new Configuration();
+    for (Entry<String,String> entry: cf.entrySet()) {
+      conf.set(entry.getKey(), entry.getValue());
+    }
+    return JavaSparkContext.toSparkContext(sc).newAPIHadoopRDD(conf, inputFormatClass, keyClass, valueClass);
+  }
+
+  public static Object self(Object o) {
+    Warp10Spark.init();
+    return o;
   }
 }

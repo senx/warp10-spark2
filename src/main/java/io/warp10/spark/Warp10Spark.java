@@ -1,5 +1,5 @@
 //
-//   Copyright 2018-2022  SenX S.A.S.
+//   Copyright 2018-2023  SenX S.A.S.
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -32,40 +32,56 @@ public class Warp10Spark {
   private static final String DISABLE_LOGGING = "disable.logging";
 
   public static void init() {
+
+    //
+    // Do not initialize WarpConfig multiple times
+    //
+
+    if (WarpConfig.isPropertiesSet()) {
+      return;
+    }
+
     try {
-      if (null != SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG, null)) {
+      SparkSession session = null;
+
+      try {
+        session = SparkSession.active();
+      } catch (Throwable t) {
+      }
+
+      if (null != session && null != session.conf().get(WarpConfig.WARP10_CONFIG, null)) {
         // Force the Java property to be set to the same config file so other parts of Warp 10 behave correctly
         // even though the config was set via Spark
-        System.setProperty(WarpConfig.WARP10_CONFIG, SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG));
-        InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG));
+        System.setProperty(WarpConfig.WARP10_CONFIG, session.conf().get(WarpConfig.WARP10_CONFIG));
+        InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(session.conf().get(WarpConfig.WARP10_CONFIG));
 
         if (null == in) {
           try {
-            in = new FileInputStream(SparkFiles.get(SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG)));
+            in = new FileInputStream(SparkFiles.get(session.conf().get(WarpConfig.WARP10_CONFIG)));
           } catch (IOException ioe) {
           }
         }
 
         if (null == in) {
-          in = new FileInputStream(SparkSession.active().conf().get(WarpConfig.WARP10_CONFIG));
+          in = new FileInputStream(session.conf().get(WarpConfig.WARP10_CONFIG));
         }
 
         WarpConfig.safeSetProperties(new InputStreamReader(in));
-      } else if (null != SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG, null)) {
+      } else if (null != session && null != session.conf().get("spark." + WarpConfig.WARP10_CONFIG, null)) {
         // Force the Java property to be set to the same config file so other parts of Warp 10 behave correctly
         // even though the config was set via Spark
-        System.setProperty(WarpConfig.WARP10_CONFIG, SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG));
-        InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG));
+        System.setProperty(WarpConfig.WARP10_CONFIG, session.conf().get("spark." + WarpConfig.WARP10_CONFIG));
+        InputStream in = Warp10Spark.class.getClassLoader().getResourceAsStream(session.conf().get("spark." + WarpConfig.WARP10_CONFIG));
 
         if (null == in) {
           try {
-            in = new FileInputStream(SparkFiles.get(SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG)));
+            in = new FileInputStream(SparkFiles.get(session.conf().get("spark." + WarpConfig.WARP10_CONFIG)));
           } catch (IOException ioe) {
           }
         }
 
         if (null == in) {
-          in = new FileInputStream(SparkSession.active().conf().get("spark." + WarpConfig.WARP10_CONFIG));
+          in = new FileInputStream(session.conf().get("spark." + WarpConfig.WARP10_CONFIG));
         }
 
         WarpConfig.safeSetProperties(new InputStreamReader(in));
@@ -116,7 +132,6 @@ public class Warp10Spark {
       if ("true".equals(System.getProperty(DISABLE_LOGGING))) {
         LogManager.getLogManager().reset();
       }
-
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
