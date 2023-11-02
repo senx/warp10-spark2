@@ -16,29 +16,18 @@
 
 package io.warp10.spark;
 
-import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.api.java.function.MapPartitionsFunction;
-import org.apache.spark.rdd.RDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 
-import io.warp10.hadoop.WritableUtils;
 import io.warp10.script.WarpScriptException;
 import io.warp10.spark.common.SparkUtils;
 import io.warp10.spark.common.WarpScriptAbstractFunction;
-import scala.collection.convert.Wrappers;
-import scala.collection.convert.Wrappers.IteratorWrapper;
 
 public class WarpScriptMapPartitionsFunction<T,U> extends WarpScriptAbstractFunction implements MapPartitionsFunction<T, U>, FlatMapFunction<T, U> {
 
